@@ -1,0 +1,12 @@
+# Ignora o versionamento do git
+.git
+
+# Ignora as dependências do node, que serão instaladas na nuvem
+node_modules
+
+# Arquivos de ambiente local
+.env
+
+# Arquivos de configuração do editor
+.vscode
+dist
