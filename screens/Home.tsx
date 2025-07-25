@@ -61,7 +61,7 @@ export const Home = ({ navigation }) => {
             onPress={() => navigation.navigate('Histórico')} 
           />
            {/* Adicione um card vazio para alinhar o último item à esquerda, se necessário */}
-           <View style={styles.emptyCard} />
+           
         </View>
         {/* A </View> extra que causava o erro foi removida daqui */}
       </ScrollView>
