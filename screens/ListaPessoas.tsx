@@ -15,9 +15,22 @@ export const ListaPessoas = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
+  // --- LÓGICA DE FILTRAGEM ATUALIZADA ---
   const filteredPessoas = useMemo(() => {
-    if (!searchTerm) return pessoas;
-    return pessoas.filter(p => p.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!searchTerm) {
+      return pessoas;
+    }
+    
+    const lowerCaseTerm = searchTerm.toLowerCase();
+    
+    return pessoas.filter(p => {
+      // Converte nome e documento (se existir) para minúsculas
+      const nomeLower = p.nome.toLowerCase();
+      const documentoLower = p.documento ? p.documento.toLowerCase() : '';
+      
+      // Retorna verdadeiro se o termo de busca estiver no nome OU no documento
+      return nomeLower.includes(lowerCaseTerm) || documentoLower.includes(lowerCaseTerm);
+    });
   }, [searchTerm, pessoas]);
 
   const renderItem = ({ item }) => (
@@ -25,7 +38,8 @@ export const ListaPessoas = ({ navigation }) => {
       <Image source={{ uri: item.foto }} style={styles.foto} />
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>{item.nome}</Text>
-        <Text style={styles.cardSubtitle}>{item.perfil}</Text>
+        {/* Adicionado o documento abaixo do perfil para melhor visualização */}
+        <Text style={styles.cardSubtitle}>{item.perfil} • DOC: {item.documento}</Text>
         {!item.ativo && <Text style={styles.inactiveText}>(INATIVO)</Text>}
       </View>
       <TouchableOpacity onPress={() => navigation.navigate('Editar Pessoa', { pessoaId: item.id })} style={styles.editButton}>
@@ -42,7 +56,8 @@ export const ListaPessoas = ({ navigation }) => {
           <Search size={20} color="#9ca3af" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Pesquisar pessoa..."
+            // --- Placeholder do campo de busca atualizado ---
+            placeholder="Pesquisar por nome ou documento..."
             value={searchTerm}
             onChangeText={setSearchTerm}
           />

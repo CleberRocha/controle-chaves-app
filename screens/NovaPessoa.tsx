@@ -60,21 +60,40 @@ export const NovaPessoa = ({ navigation }) => {
   };
 
   const salvarPessoa = async () => {
+    // 1. Validação de campos obrigatórios (sem alteração)
     if (!nome.trim() || !documento.trim() || !perfil || !foto) {
       Alert.alert('Atenção', 'Todos os campos (Foto, Nome, Documento e Perfil) são obrigatórios.');
       return;
     }
 
+    // --- NOVA VALIDAÇÃO DE DOCUMENTO ÚNICO ---
+    // 2. Carrega os cadastros existentes para verificação
+    const pessoasExistentes = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
+    const documentoFormatado = documento.trim().toLowerCase();
+
+    // 3. Verifica se algum documento existente é igual ao novo (ignorando maiúsculas/minúsculas)
+    const documentoJaExiste = pessoasExistentes.some(
+      pessoa => pessoa.documento && pessoa.documento.trim().toLowerCase() === documentoFormatado
+    );
+
+    // 4. Se o documento já existe, exibe um alerta e interrompe a função
+    if (documentoJaExiste) {
+      Alert.alert('Erro de Duplicidade', 'Este documento já está cadastrado no sistema.');
+      return;
+    }
+    // --- FIM DA NOVA VALIDAÇÃO ---
+
+    // 5. Se todas as validações passarem, prossegue com o salvamento
     const novaPessoa = { 
       id: Date.now().toString(), 
-      nome, 
-      documento,
+      nome: nome.trim(), 
+      documento: documento.trim(),
       foto,
       perfil,
       ativo: true,
     };
 
-    const pessoasExistentes = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
+    // Adiciona a nova pessoa à lista existente e salva
     await AsyncStorage.setItem('pessoas', JSON.stringify([...pessoasExistentes, novaPessoa]));
 
     Alert.alert('Sucesso', 'Pessoa cadastrada com sucesso!');
