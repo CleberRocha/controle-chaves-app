@@ -2,9 +2,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, SectionList, FlatList, StyleSheet, SafeAreaView, Alert, TouchableOpacity, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { KeyRound, User, Calendar, CheckCircle, Clock, Search, FileDown } from 'lucide-react-native';
+import { KeyRound, User, Calendar, CheckCircle, Clock, Search, FileDown, XCircle } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 // Função que gera o conteúdo HTML do relatório
 const gerarConteudoHtml = (dados, modo, nomePessoaFn, nomeChaveFn) => {
@@ -89,6 +90,11 @@ export const Historico = ({ navigation }) => {
   const [chaves, setChaves] = useState([]);
   const [viewMode, setViewMode] = useState('recentes');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [datePickerMode, setDatePickerMode] = useState('start');
 
   const carregarDados = async () => {
     try {
@@ -120,15 +126,23 @@ export const Historico = ({ navigation }) => {
   };
 
   const processedData = useMemo(() => {
+    const historicoFiltradoPorData = historico.filter(item => {
+      const itemDate = new Date(item.data);
+      if (startDate && itemDate < startDate.setHours(0, 0, 0, 0)) return false;
+      if (endDate && itemDate > endDate.setHours(23, 59, 59, 999)) return false;
+      return true;
+    });
+
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const historicoFiltradoPorBusca = !lowerCaseSearchTerm ? historicoFiltradoPorData : historicoFiltradoPorData.filter(item => 
+      nomePessoa(item.pessoaId).toLowerCase().includes(lowerCaseSearchTerm) ||
+      nomeChave(item.chaveId).toLowerCase().includes(lowerCaseSearchTerm)
+    );
+
     if (viewMode === 'recentes') {
-      if (!lowerCaseSearchTerm) return historico;
-      return historico.filter(item => 
-        nomePessoa(item.pessoaId).toLowerCase().includes(lowerCaseSearchTerm) ||
-        nomeChave(item.chaveId).toLowerCase().includes(lowerCaseSearchTerm)
-      );
+      return historicoFiltradoPorBusca;
     }
-    const grouped = historico.reduce((acc, emprestimo) => {
+    const grouped = historicoFiltradoPorBusca.reduce((acc, emprestimo) => {
       const key = viewMode === 'porPessoa' ? emprestimo.pessoaId : emprestimo.chaveId;
       if (!acc[key]) acc[key] = [];
       acc[key].push(emprestimo);
@@ -138,9 +152,9 @@ export const Historico = ({ navigation }) => {
       title: viewMode === 'porPessoa' ? nomePessoa(id) : nomeChave(id),
       data: grouped[id],
     })).sort((a, b) => a.title.localeCompare(b.title));
-    if (!lowerCaseSearchTerm) return sections;
-    return sections.filter(section => section.title.toLowerCase().includes(lowerCaseSearchTerm));
-  }, [viewMode, historico, pessoas, chaves, searchTerm]);
+    
+    return sections;
+  }, [viewMode, historico, pessoas, chaves, searchTerm, startDate, endDate]);
 
   const handleExportPdf = async () => {
     const dataToExport = processedData || [];
@@ -192,13 +206,36 @@ export const Historico = ({ navigation }) => {
     </View>
   );
 
+  const showDatePicker = (mode) => {
+    setDatePickerMode(mode);
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const handleConfirmDate = (date) => {
+    if (datePickerMode === 'start') {
+      setStartDate(date);
+    } else {
+      setEndDate(date);
+    }
+    hideDatePicker();
+  };
+  
+  const clearDateFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Histórico</Text>
           <TouchableOpacity style={styles.exportButton} onPress={handleExportPdf}>
-            <FileDown size={24} color="#3b82f6" />
+            <FileDown size={20} color="#3b82f6" />
             <Text style={styles.exportButtonText}>Exportar</Text>
           </TouchableOpacity>
         </View>
@@ -207,6 +244,26 @@ export const Historico = ({ navigation }) => {
           <TouchableOpacity style={[styles.viewModeButton, viewMode === 'recentes' && styles.viewModeButtonActive]} onPress={() => setViewMode('recentes')}><Text style={[styles.viewModeText, viewMode === 'recentes' && styles.viewModeTextActive]}>Recentes</Text></TouchableOpacity>
           <TouchableOpacity style={[styles.viewModeButton, viewMode === 'porPessoa' && styles.viewModeButtonActive]} onPress={() => setViewMode('porPessoa')}><Text style={[styles.viewModeText, viewMode === 'porPessoa' && styles.viewModeTextActive]}>Por Pessoa</Text></TouchableOpacity>
           <TouchableOpacity style={[styles.viewModeButton, viewMode === 'porChave' && styles.viewModeButtonActive]} onPress={() => setViewMode('porChave')}><Text style={[styles.viewModeText, viewMode === 'porChave' && styles.viewModeTextActive]}>Por Chave</Text></TouchableOpacity>
+        </View>
+
+        <View style={styles.dateFilterContainer}>
+          <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('start')}>
+            <Calendar size={18} color={startDate ? "#1d4ed8" : "#4b5563"} />
+            <Text style={styles.dateButtonText}>
+              Início: {startDate ? startDate.toLocaleDateString('pt-BR') : 'DD/MM/AAAA'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('end')}>
+            <Calendar size={18} color={endDate ? "#1d4ed8" : "#4b5563"} />
+            <Text style={styles.dateButtonText}>
+              Fim: {endDate ? endDate.toLocaleDateString('pt-BR') : 'DD/MM/AAAA'}
+            </Text>
+          </TouchableOpacity>
+          {(startDate || endDate) && (
+            <TouchableOpacity style={styles.clearDateButton} onPress={clearDateFilter}>
+              <XCircle size={20} color="#ef4444" />
+            </TouchableOpacity>
+          )}
         </View>
         
         <View style={styles.searchContainer}>
@@ -233,6 +290,15 @@ export const Historico = ({ navigation }) => {
           />
         )}
       </View>
+      <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirmDate}
+          onCancel={hideDatePicker}
+          cancelTextIOS="Cancelar"
+          confirmTextIOS="Confirmar"
+          headerTextIOS={datePickerMode === 'start' ? "Escolha a data de início" : "Escolha a data de fim"}
+        />
     </SafeAreaView>
   );
 };
@@ -242,13 +308,17 @@ const styles = StyleSheet.create({
   mainContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 24, },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   headerTitle: { fontSize: 30, fontWeight: 'bold', color: '#1f2937' },
-  exportButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#e0e7ff' },
+  exportButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#e0e7ff' },
   exportButtonText: { color: '#3b82f6', fontWeight: 'bold', marginLeft: 6 },
   viewModeContainer: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#e5e7eb', borderRadius: 10, padding: 4, marginBottom: 16 },
   viewModeButton: { flex: 1, paddingVertical: 8, borderRadius: 8 },
   viewModeButtonActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2 },
   viewModeText: { textAlign: 'center', color: '#4b5563', fontWeight: '600' },
   viewModeTextActive: { color: '#1d4ed8' },
+  dateFilterContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, },
+  dateButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', },
+  dateButtonText: { marginLeft: 8, color: '#4b5563', fontWeight: '500', },
+  clearDateButton: { padding: 8, },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, marginBottom: 24, paddingHorizontal: 12, borderWidth: 1, borderColor: '#e5e7eb' },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, height: 48, fontSize: 16, color: '#1f2937' },
@@ -259,8 +329,8 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', flex: 1 },
   statusBadge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 20 },
-  statusDevolvido: { backgroundColor: '#dcfce7' }, // green-100
-  statusEmprestado: { backgroundColor: '#ffedd5' }, // orange-100
+  statusDevolvido: { backgroundColor: '#dcfce7' },
+  statusEmprestado: { backgroundColor: '#ffedd5' },
   statusText: { fontSize: 12, fontWeight: 'bold', color: '#1f2937' },
   cardBody: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
