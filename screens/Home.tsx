@@ -59,11 +59,9 @@ export const Home = ({ navigation }) => {
             label="Histórico" 
             icon={<History size={iconSize} color="#6d28d9" />} // Roxo para histórico
             onPress={() => navigation.navigate('Histórico')} 
-          />
-           {/* Adicione um card vazio para alinhar o último item à esquerda, se necessário */}
-           
+          />           
         </View>
-        {/* A </View> extra que causava o erro foi removida daqui */}
+        
       </ScrollView>
     </SafeAreaView>
   );
