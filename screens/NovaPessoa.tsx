@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// 1. Importe o ícone de Telefone (Phone)
 import { User, Fingerprint, Check, Camera, ChevronDown, X, Phone } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -39,7 +38,6 @@ const SelectionButton = ({ label, value, placeholder, onPress }) => (
 export const NovaPessoa = ({ navigation }) => {
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
-  // 2. Adicione o estado para o telefone
   const [telefone, setTelefone] = useState('');
   const [foto, setFoto] = useState(null);
   const [perfil, setPerfil] = useState(null);
@@ -67,12 +65,11 @@ export const NovaPessoa = ({ navigation }) => {
       return;
     }
     
-    // 3. Inclua o telefone no objeto da nova pessoa
     const novaPessoa = {
       id: Date.now().toString(),
       nome,
       documento,
-      telefone, // Adicionado aqui
+      telefone,
       foto,
       perfil,
       ativo: true,
@@ -114,7 +111,6 @@ export const NovaPessoa = ({ navigation }) => {
               value={documento}
               onChangeText={setDocumento}
             />
-            {/* 4. Adicione o campo de input para o telefone */}
             <InputWithIcon
               icon={<Phone size={20} color="#6b7280" />}
               placeholder="Telefone (opcional)"
@@ -132,7 +128,7 @@ export const NovaPessoa = ({ navigation }) => {
         </ScrollView>
         <View style={styles.footerButtons}>
           <TouchableOpacity onPress={handleSalvar} style={styles.saveButton}>
-            <Check size={20} color="#fff" />
+            <Check size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.saveButtonText}>Salvar Cadastro</Text>
           </TouchableOpacity>
         </View>
@@ -186,8 +182,20 @@ const styles = StyleSheet.create({
     label: { color: '#374151', fontWeight: '600', marginBottom: 8, fontSize: 16 },
     placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af' },
     footerButtons: { padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#fff' },
-    saveButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#2563eb' },
-    saveButtonText: { color: '#fff', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
+    // Estilo do botão corrigido abaixo
+    saveButton: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        paddingVertical: 14, 
+        borderRadius: 12, 
+        backgroundColor: '#2563eb' 
+    },
+    saveButtonText: { 
+        color: '#fff', 
+        fontWeight: 'bold', 
+        fontSize: 16 
+    },
     modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%' },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
