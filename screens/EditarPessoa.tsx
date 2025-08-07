@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Fingerprint, Check, Camera, ChevronDown, X, Trash2, CheckCircle } from 'lucide-react-native';
+// 1. Importe o ícone de Telefone (Phone)
+import { User, Fingerprint, Check, Camera, ChevronDown, X, Trash2, CheckCircle, Phone } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const PERFIS = ["Professores", "Alunos", "Funcionários", "Terceirizados", "Servidores"];
 
 // Componente reutilizável para inputs
-const InputWithIcon = ({ icon, placeholder, value, onChangeText }) => (
+const InputWithIcon = ({ icon, placeholder, value, onChangeText, keyboardType = 'default' }) => (
   <View style={styles.inputContainer}>
     {icon}
     <TextInput
@@ -17,6 +18,7 @@ const InputWithIcon = ({ icon, placeholder, value, onChangeText }) => (
       style={styles.input}
       placeholder={placeholder}
       placeholderTextColor="#9ca3af"
+      keyboardType={keyboardType}
     />
   </View>
 );
@@ -39,6 +41,8 @@ export const EditarPessoa = ({ route, navigation }) => {
 
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
+  // 2. Adicione o estado para o telefone
+  const [telefone, setTelefone] = useState('');
   const [foto, setFoto] = useState(null);
   const [perfil, setPerfil] = useState(null);
   const [ativo, setAtivo] = useState(true);
@@ -54,7 +58,9 @@ export const EditarPessoa = ({ route, navigation }) => {
         setDocumento(pessoaParaEditar.documento);
         setFoto(pessoaParaEditar.foto);
         setPerfil(pessoaParaEditar.perfil);
-        setAtivo(pessoaParaEditar.ativo !== false); // Garante que o padrão é true se a propriedade não existir
+        // 3. Carregue o telefone da pessoa
+        setTelefone(pessoaParaEditar.telefone || '');
+        setAtivo(pessoaParaEditar.ativo !== false);
       }
     };
     carregarPessoa();
@@ -78,13 +84,14 @@ export const EditarPessoa = ({ route, navigation }) => {
 
   const handleSalvar = async () => {
     if (!nome.trim() || !documento.trim() || !perfil || !foto) {
-      Alert.alert('Atenção', 'Todos os campos são obrigatórios.');
+      Alert.alert('Atenção', 'Todos os campos, exceto telefone, são obrigatórios.');
       return;
     }
     const pessoasAntigas = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
     const pessoasNovas = pessoasAntigas.map(p => {
       if (p.id === pessoaId) {
-        return { ...p, nome, documento, foto, perfil, ativo };
+        // 4. Inclua o telefone ao salvar as alterações
+        return { ...p, nome, documento, foto, perfil, ativo, telefone };
       }
       return p;
     });
@@ -142,6 +149,14 @@ export const EditarPessoa = ({ route, navigation }) => {
               placeholder="Documento ou crachá"
               value={documento}
               onChangeText={setDocumento}
+            />
+            {/* 5. Adicione o campo de input para o telefone */}
+            <InputWithIcon
+              icon={<Phone size={20} color="#6b7280" />}
+              placeholder="Telefone (opcional)"
+              value={telefone}
+              onChangeText={setTelefone}
+              keyboardType="phone-pad"
             />
             <SelectionButton 
               label="Perfil"
@@ -209,15 +224,14 @@ const styles = StyleSheet.create({
     inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.20, shadowRadius: 1.41, elevation: 2 },
     input: { flex: 1, fontSize: 16, color: '#1f2937', marginLeft: 12 },
     label: { color: '#374151', fontWeight: '600', marginBottom: 8, fontSize: 16 },
-    placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af' }, // Removido marginLeft
+    placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af' },
     footerButtons: { flexDirection: 'row', padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#fff' },
     toggleButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, marginRight: 8, },
-    deactivateButton: { backgroundColor: '#ef4444' }, // red
-    activateButton: { backgroundColor: '#22c55e' }, // green
+    deactivateButton: { backgroundColor: '#ef4444' },
+    activateButton: { backgroundColor: '#22c55e' },
     toggleButtonText: { color: '#fff', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
     saveButton: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#2563eb', marginLeft: 8 },
     saveButtonText: { color: '#fff', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
-    // Estilos do Modal
     modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%' },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },

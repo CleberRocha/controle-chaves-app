@@ -1,15 +1,15 @@
 // screens/NovaPessoa.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Fingerprint, Check, Camera, ChevronDown, X } from 'lucide-react-native';
+// 1. Importe o ícone de Telefone (Phone)
+import { User, Fingerprint, Check, Camera, ChevronDown, X, Phone } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-// Lista de perfis disponíveis no aplicativo
 const PERFIS = ["Professores", "Alunos", "Funcionários", "Terceirizados", "Servidores"];
 
 // Componente reutilizável para inputs
-const InputWithIcon = ({ icon, placeholder, value, onChangeText }) => (
+const InputWithIcon = ({ icon, placeholder, value, onChangeText, keyboardType = 'default' }) => (
   <View style={styles.inputContainer}>
     {icon}
     <TextInput
@@ -18,6 +18,7 @@ const InputWithIcon = ({ icon, placeholder, value, onChangeText }) => (
       style={styles.input}
       placeholder={placeholder}
       placeholderTextColor="#9ca3af"
+      keyboardType={keyboardType}
     />
   </View>
 );
@@ -35,13 +36,14 @@ const SelectionButton = ({ label, value, placeholder, onPress }) => (
     </View>
 );
 
-
 export const NovaPessoa = ({ navigation }) => {
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
+  // 2. Adicione o estado para o telefone
+  const [telefone, setTelefone] = useState('');
   const [foto, setFoto] = useState(null);
-  const [perfil, setPerfil] = useState(null); // Estado para o perfil selecionado
-  const [modalVisible, setModalVisible] = useState(false); // Estado para o modal de perfil
+  const [perfil, setPerfil] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const tirarFoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -59,55 +61,34 @@ export const NovaPessoa = ({ navigation }) => {
     }
   };
 
-  const salvarPessoa = async () => {
-    // 1. Validação de campos obrigatórios (sem alteração)
+  const handleSalvar = async () => {
     if (!nome.trim() || !documento.trim() || !perfil || !foto) {
-      Alert.alert('Atenção', 'Todos os campos (Foto, Nome, Documento e Perfil) são obrigatórios.');
+      Alert.alert('Atenção', 'Nome, documento, foto e perfil são obrigatórios.');
       return;
     }
-
-    // --- NOVA VALIDAÇÃO DE DOCUMENTO ÚNICO ---
-    // 2. Carrega os cadastros existentes para verificação
-    const pessoasExistentes = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
-    const documentoFormatado = documento.trim().toLowerCase();
-
-    // 3. Verifica se algum documento existente é igual ao novo (ignorando maiúsculas/minúsculas)
-    const documentoJaExiste = pessoasExistentes.some(
-      pessoa => pessoa.documento && pessoa.documento.trim().toLowerCase() === documentoFormatado
-    );
-
-    // 4. Se o documento já existe, exibe um alerta e interrompe a função
-    if (documentoJaExiste) {
-      Alert.alert('Erro de Duplicidade', 'Este documento já está cadastrado no sistema.');
-      return;
-    }
-    // --- FIM DA NOVA VALIDAÇÃO ---
-
-    // 5. Se todas as validações passarem, prossegue com o salvamento
-    const novaPessoa = { 
-      id: Date.now().toString(), 
-      nome: nome.trim(), 
-      documento: documento.trim(),
+    
+    // 3. Inclua o telefone no objeto da nova pessoa
+    const novaPessoa = {
+      id: Date.now().toString(),
+      nome,
+      documento,
+      telefone, // Adicionado aqui
       foto,
       perfil,
       ativo: true,
     };
 
-    // Adiciona a nova pessoa à lista existente e salva
-    await AsyncStorage.setItem('pessoas', JSON.stringify([...pessoasExistentes, novaPessoa]));
-
-    Alert.alert('Sucesso', 'Pessoa cadastrada com sucesso!');
+    const pessoasAntigas = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
+    await AsyncStorage.setItem('pessoas', JSON.stringify([...pessoasAntigas, novaPessoa]));
+    Alert.alert('Sucesso', 'Pessoa cadastrada!');
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoidingView}
-      >
-        <View style={styles.mainContainer}>
-          <View>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        <ScrollView>
+          <View style={styles.mainContainer}>
             <Text style={styles.headerTitle}>Nova Pessoa</Text>
             
             <TouchableOpacity style={styles.fotoPicker} onPress={tirarFoto}>
@@ -116,7 +97,7 @@ export const NovaPessoa = ({ navigation }) => {
               ) : (
                 <>
                   <Camera size={40} color="#6b7280" />
-                  <Text style={styles.fotoPickerText}>Adicionar Foto</Text>
+                  <Text style={styles.fotoPickerText}>Tirar Foto</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -133,6 +114,14 @@ export const NovaPessoa = ({ navigation }) => {
               value={documento}
               onChangeText={setDocumento}
             />
+            {/* 4. Adicione o campo de input para o telefone */}
+            <InputWithIcon
+              icon={<Phone size={20} color="#6b7280" />}
+              placeholder="Telefone (opcional)"
+              value={telefone}
+              onChangeText={setTelefone}
+              keyboardType="phone-pad"
+            />
             <SelectionButton 
               label="Perfil"
               value={perfil}
@@ -140,10 +129,11 @@ export const NovaPessoa = ({ navigation }) => {
               onPress={() => setModalVisible(true)}
             />
           </View>
-          
-          <TouchableOpacity onPress={salvarPessoa} style={styles.confirmButton}>
-            <Check size={20} color="#fff" style={styles.buttonIcon} />
-            <Text style={styles.confirmButtonText}>Salvar Pessoa</Text>
+        </ScrollView>
+        <View style={styles.footerButtons}>
+          <TouchableOpacity onPress={handleSalvar} style={styles.saveButton}>
+            <Check size={20} color="#fff" />
+            <Text style={styles.saveButtonText}>Salvar Cadastro</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -184,27 +174,24 @@ export const NovaPessoa = ({ navigation }) => {
   );
 };
 
-// ... (Copie e cole a seção de styles inteira, pois há adições para o modal)
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f3f4f6' },
-  keyboardAvoidingView: { flex: 1 },
-  mainContainer: { flex: 1, padding: 24, justifyContent: 'space-between' },
-  headerTitle: { fontSize: 30, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 },
-  fotoPicker: { height: 140, width: 140, borderRadius: 70, backgroundColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 32, overflow: 'hidden' },
-  foto: { height: '100%', width: '100%' },
-  fotoPickerText: { marginTop: 8, color: '#6b7280' },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.20, shadowRadius: 1.41, elevation: 2 },
-  input: { flex: 1, fontSize: 16, color: '#1f2937', marginLeft: 12 },
-  label: { color: '#374151', fontWeight: '600', marginBottom: 8, fontSize: 16 },
-  placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af', marginLeft: 12 },
-  confirmButton: { backgroundColor: '#2563eb', paddingVertical: 16, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 },
-  confirmButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
-  buttonIcon: { marginRight: 8 },
-  // Estilos do Modal
-  modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
-  modalItem: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  modalItemText: { fontSize: 18, color: '#1f2937' },
+    safeArea: { flex: 1, backgroundColor: '#f3f4f6' },
+    mainContainer: { padding: 24, paddingBottom: 20 },
+    headerTitle: { fontSize: 30, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 },
+    fotoPicker: { height: 140, width: 140, borderRadius: 70, backgroundColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 32, overflow: 'hidden' },
+    foto: { height: '100%', width: '100%' },
+    fotoPickerText: { marginTop: 8, color: '#6b7280' },
+    inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.20, shadowRadius: 1.41, elevation: 2 },
+    input: { flex: 1, fontSize: 16, color: '#1f2937', marginLeft: 12 },
+    label: { color: '#374151', fontWeight: '600', marginBottom: 8, fontSize: 16 },
+    placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af' },
+    footerButtons: { padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#fff' },
+    saveButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#2563eb' },
+    saveButtonText: { color: '#fff', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
+    modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
+    modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
+    modalItem: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+    modalItemText: { fontSize: 18, color: '#1f2937' },
 });

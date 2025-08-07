@@ -1,7 +1,7 @@
 // screens/Home.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StatusBar, StyleSheet, SafeAreaView } from 'react-native';
-import { KeyRound, UserPlus, ArrowRightLeft, LogIn, FileText, History } from 'lucide-react-native';
+import { KeyRound, UserPlus, ArrowRightLeft, LogIn, FileText, History, Settings } from 'lucide-react-native';
 
 // Componente de cartão para o menu, agora com StyleSheet
 const MenuCard = ({ label, icon, onPress }) => (
@@ -59,7 +59,15 @@ export const Home = ({ navigation }) => {
             label="Histórico" 
             icon={<History size={iconSize} color="#6d28d9" />} // Roxo para histórico
             onPress={() => navigation.navigate('Histórico')} 
-          />           
+          />
+          {/* --- NOVO BOTÃO DE CONFIGURAÇÕES ADICIONADO ABAIXO --- */}
+          <MenuCard
+            label="Configurações"
+            icon={<Settings size={iconSize} color="#f59e0b" />} // Cor âmbar para configurações
+            onPress={() => navigation.navigate('Configurações')}
+          />
+          {/* Adiciona um card vazio para manter o alinhamento caso o número de itens seja ímpar */}
+          <View style={styles.emptyCard} />
         </View>
         
       </ScrollView>

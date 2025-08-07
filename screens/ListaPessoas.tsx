@@ -15,7 +15,7 @@ export const ListaPessoas = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  // --- LÓGICA DE FILTRAGEM ATUALIZADA ---
+  // Lógica de filtragem atualizada para incluir telefone
   const filteredPessoas = useMemo(() => {
     if (!searchTerm) {
       return pessoas;
@@ -24,12 +24,14 @@ export const ListaPessoas = ({ navigation }) => {
     const lowerCaseTerm = searchTerm.toLowerCase();
     
     return pessoas.filter(p => {
-      // Converte nome e documento (se existir) para minúsculas
       const nomeLower = p.nome.toLowerCase();
       const documentoLower = p.documento ? p.documento.toLowerCase() : '';
+      // 1. Adiciona o telefone à lógica de busca
+      const telefoneLower = p.telefone ? p.telefone.toLowerCase() : '';
       
-      // Retorna verdadeiro se o termo de busca estiver no nome OU no documento
-      return nomeLower.includes(lowerCaseTerm) || documentoLower.includes(lowerCaseTerm);
+      return nomeLower.includes(lowerCaseTerm) || 
+             documentoLower.includes(lowerCaseTerm) ||
+             telefoneLower.includes(lowerCaseTerm);
     });
   }, [searchTerm, pessoas]);
 
@@ -38,8 +40,9 @@ export const ListaPessoas = ({ navigation }) => {
       <Image source={{ uri: item.foto }} style={styles.foto} />
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>{item.nome}</Text>
-        {/* Adicionado o documento abaixo do perfil para melhor visualização */}
         <Text style={styles.cardSubtitle}>{item.perfil} • DOC: {item.documento}</Text>
+        {/* 2. Exibe o telefone se ele existir */}
+        {item.telefone ? <Text style={styles.cardPhone}>Tel: {item.telefone}</Text> : null}
         {!item.ativo && <Text style={styles.inactiveText}>(INATIVO)</Text>}
       </View>
       <TouchableOpacity onPress={() => navigation.navigate('Editar Pessoa', { pessoaId: item.id })} style={styles.editButton}>
@@ -56,8 +59,8 @@ export const ListaPessoas = ({ navigation }) => {
           <Search size={20} color="#9ca3af" />
           <TextInput
             style={styles.searchInput}
-            // --- Placeholder do campo de busca atualizado ---
-            placeholder="Pesquisar por nome ou documento..."
+            // 3. Atualiza o placeholder da busca
+            placeholder="Pesquisar por nome, doc ou telefone..."
             value={searchTerm}
             onChangeText={setSearchTerm}
           />
@@ -87,6 +90,8 @@ const styles = StyleSheet.create({
     cardInfo: { flex: 1, },
     cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937' },
     cardSubtitle: { fontSize: 14, color: '#6b7280' },
+    // 4. Estilo para o texto do telefone
+    cardPhone: { fontSize: 14, color: '#374151', marginTop: 4 },
     inactiveText: { fontSize: 12, color: '#ef4444', fontWeight: 'bold', marginTop: 4, },
     editButton: { padding: 8, },
     fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: '#2563eb', justifyContent: 'center', alignItems: 'center', elevation: 8, },

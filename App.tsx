@@ -13,6 +13,8 @@ import { ListaPessoas } from './screens/ListaPessoas';
 import { EditarPessoa } from './screens/EditarPessoa';
 import { ListaChaves } from './screens/ListaChaves';
 import { EditarChave } from './screens/EditarChave';
+// --- IMPORTE A NOVA TELA DE CONFIGURAÇÕES ABAIXO ---
+import { Configuracoes } from './screens/Configuracoes';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,7 +32,8 @@ export default function App() {
         <Stack.Screen name="Novo Empréstimo" component={NovoEmprestimo} />
         <Stack.Screen name="Devolver Chave" component={DevolverChave} />
         <Stack.Screen name="Relatórios" component={Relatorio} />
-        <Stack.Screen name="Histórico" component={Historico} /> 
+        <Stack.Screen name="Histórico" component={Historico} />
+        <Stack.Screen name="Configurações" component={Configuracoes} />
       </Stack.Navigator>
     </NavigationContainer>
   );
