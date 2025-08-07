@@ -1,6 +1,6 @@
 // screens/Configuracoes.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
@@ -17,7 +17,6 @@ export const Configuracoes = ({ navigation }) => {
       const pessoasRaw = await AsyncStorage.getItem('pessoas') || '[]';
       const pessoas = JSON.parse(pessoasRaw);
 
-      // Converte as imagens para o formato Base64 para incluí-las no backup
       const pessoasComFotosBase64 = await Promise.all(
         pessoas.map(async (pessoa) => {
           if (pessoa.foto && pessoa.foto.startsWith('file://')) {
@@ -25,11 +24,10 @@ export const Configuracoes = ({ navigation }) => {
               const fotoBase64 = await FileSystem.readAsStringAsync(pessoa.foto, {
                 encoding: FileSystem.EncodingType.Base64,
               });
-              // Adiciona um novo campo com a foto em Base64
               return { ...pessoa, fotoBase64 };
             } catch (e) {
               console.log(`Não foi possível ler a foto de ${pessoa.nome}:`, e);
-              return pessoa; // Retorna a pessoa sem a foto se houver erro
+              return pessoa;
             }
           }
           return pessoa;
@@ -38,7 +36,7 @@ export const Configuracoes = ({ navigation }) => {
 
       const backupData = {
         chaves,
-        pessoas: JSON.stringify(pessoasComFotosBase64), // Salva o array com as fotos
+        pessoas: JSON.stringify(pessoasComFotosBase64),
         emprestimos,
         dataBackup: new Date().toISOString(),
       };
@@ -51,21 +49,74 @@ export const Configuracoes = ({ navigation }) => {
         encoding: FileSystem.EncodingType.UTF8,
       });
 
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Erro', 'O compartilhamento não está disponível neste dispositivo.');
-        return;
-      }
-
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/json',
-        dialogTitle: 'Salvar backup de dados',
-      });
+      // Pergunta ao usuário o que fazer com o arquivo gerado
+      Alert.alert(
+        "Backup Criado",
+        "Seu arquivo de backup foi gerado com sucesso. O que você gostaria de fazer?",
+        [
+          {
+            text: 'Salvar no Dispositivo',
+            onPress: () => saveFileLocally(fileUri, fileName),
+          },
+          {
+            text: 'Compartilhar',
+            onPress: () => shareFile(fileUri),
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+        ]
+      );
 
     } catch (error) {
       console.error("Erro ao exportar:", error);
       Alert.alert('Erro', 'Não foi possível exportar os dados.');
     }
   };
+
+  // Nova função para salvar o arquivo localmente
+  const saveFileLocally = async (fileUri, fileName) => {
+    if (Platform.OS === "android") {
+      try {
+        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (permissions.granted) {
+          const base64 = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
+          
+          await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/json')
+            .then(async (uri) => {
+              await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+              Alert.alert('Sucesso!', `Backup salvo na pasta de Downloads.`);
+            })
+            .catch((e) => {
+              console.log(e);
+              Alert.alert('Erro', 'Não foi possível salvar o arquivo.');
+            });
+        } else {
+          Alert.alert('Atenção', 'A permissão para acessar o armazenamento é necessária para salvar o arquivo.');
+        }
+      } catch (err) {
+        console.log(err);
+        Alert.alert('Erro', 'Ocorreu um problema ao tentar salvar o arquivo.');
+      }
+    } else {
+      // Para iOS, o compartilhamento é a forma padrão de salvar arquivos
+      await shareFile(fileUri);
+    }
+  };
+
+  // Nova função para compartilhar o arquivo
+  const shareFile = async (fileUri) => {
+    if (!(await Sharing.isAvailableAsync())) {
+      Alert.alert('Erro', 'O compartilhamento não está disponível neste dispositivo.');
+      return;
+    }
+    await Sharing.shareAsync(fileUri, {
+      mimeType: 'application/json',
+      dialogTitle: 'Salvar backup de dados',
+    });
+  };
+
 
   // Função para importar os dados (Restaurar) com fotos
   const handleImportData = async () => {
@@ -89,7 +140,6 @@ export const Configuracoes = ({ navigation }) => {
               if (backupData.chaves && backupData.pessoas && backupData.emprestimos) {
                 const pessoasImportadas = JSON.parse(backupData.pessoas);
 
-                // Restaura as fotos a partir do Base64
                 const pessoasRestauradas = await Promise.all(
                   pessoasImportadas.map(async (pessoa) => {
                     if (pessoa.fotoBase64) {
@@ -99,13 +149,12 @@ export const Configuracoes = ({ navigation }) => {
                         await FileSystem.writeAsStringAsync(newFileUri, pessoa.fotoBase64, {
                           encoding: FileSystem.EncodingType.Base64,
                         });
-                        // Atualiza o objeto da pessoa com o novo caminho da foto
                         const { fotoBase64, ...pessoaSemBase64 } = pessoa;
                         return { ...pessoaSemBase64, foto: newFileUri };
                       } catch (e) {
                         console.log(`Não foi possível restaurar a foto de ${pessoa.nome}:`, e);
                         const { fotoBase64, ...pessoaSemBase64 } = pessoa;
-                        return { ...pessoaSemBase64, foto: null }; // Foto nula se falhar
+                        return { ...pessoaSemBase64, foto: null };
                       }
                     }
                     return pessoa;
