@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.seu_nome.controlechaves'
+    namespace 'br.com.grupossi.controlechaves'
     defaultConfig {
-        applicationId 'com.seu_nome.controlechaves'
+        applicationId 'br.com.grupossi.controlechaves'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
