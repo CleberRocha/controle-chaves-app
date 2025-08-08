@@ -1,4 +1,4 @@
-package br.com.grupossi.controlechaves
+package com.seu_nome.controlechaves
 
 import android.app.Application
 import android.content.res.Configuration
