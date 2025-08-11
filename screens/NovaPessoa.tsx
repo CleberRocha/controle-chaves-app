@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Fingerprint, Check, Camera, ChevronDown, X, Phone } from 'lucide-react-native';
+import { User, Fingerprint, Check, Camera, ChevronDown, X, Phone, Save } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const PERFIS = ["Professores", "Alunos", "Funcionários", "Terceirizados", "Servidores"];
@@ -60,26 +60,43 @@ export const NovaPessoa = ({ navigation }) => {
   };
 
   const handleSalvar = async () => {
-    if (!nome.trim() || !documento.trim() || !perfil || !foto) {
-      Alert.alert('Atenção', 'Nome, documento, foto e perfil são obrigatórios.');
+    const documentoTrimmed = documento.trim();
+
+    if (!nome.trim() || !documentoTrimmed || !perfil || !foto) {
+      Alert.alert('Atenção', 'Todos os campos, exceto telefone, são obrigatórios.');
       return;
     }
-    
+
+    const todasAsPessoas = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
+
+    // Verifica se já existe uma pessoa com o mesmo documento
+    const documentoExiste = todasAsPessoas.some(
+      p => p.documento.toLowerCase() === documentoTrimmed.toLowerCase()
+    );
+
+    if (documentoExiste) {
+      Alert.alert('Erro', 'Este documento já está cadastrado.');
+      return; // Impede o salvamento
+    }
+
+    // Cria o novo objeto de pessoa
     const novaPessoa = {
-      id: Date.now().toString(),
-      nome,
-      documento,
-      telefone,
+      id: Date.now().toString(), // Gera um ID único
+      nome: nome.trim(),
+      documento: documentoTrimmed,
+      telefone: telefone.trim(),
       foto,
       perfil,
-      ativo: true,
+      ativo: true
     };
 
-    const pessoasAntigas = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
-    await AsyncStorage.setItem('pessoas', JSON.stringify([...pessoasAntigas, novaPessoa]));
+    // Adiciona a nova pessoa à lista existente
+    const pessoasNovas = [...todasAsPessoas, novaPessoa];
+    await AsyncStorage.setItem('pessoas', JSON.stringify(pessoasNovas));
     Alert.alert('Sucesso', 'Pessoa cadastrada!');
     navigation.goBack();
   };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -94,7 +111,7 @@ export const NovaPessoa = ({ navigation }) => {
               ) : (
                 <>
                   <Camera size={40} color="#6b7280" />
-                  <Text style={styles.fotoPickerText}>Tirar Foto</Text>
+                  <Text style={styles.fotoPickerText}>Adicionar Foto</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -128,7 +145,7 @@ export const NovaPessoa = ({ navigation }) => {
         </ScrollView>
         <View style={styles.footerButtons}>
           <TouchableOpacity onPress={handleSalvar} style={styles.saveButton}>
-            <Check size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Save size={20} color="#fff" />
             <Text style={styles.saveButtonText}>Salvar Cadastro</Text>
           </TouchableOpacity>
         </View>
@@ -182,20 +199,8 @@ const styles = StyleSheet.create({
     label: { color: '#374151', fontWeight: '600', marginBottom: 8, fontSize: 16 },
     placeholderText: { flex: 1, fontSize: 16, color: '#9ca3af' },
     footerButtons: { padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#fff' },
-    // Estilo do botão corrigido abaixo
-    saveButton: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        paddingVertical: 14, 
-        borderRadius: 12, 
-        backgroundColor: '#2563eb' 
-    },
-    saveButtonText: { 
-        color: '#fff', 
-        fontWeight: 'bold', 
-        fontSize: 16 
-    },
+    saveButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#2563eb' },
+    saveButtonText: { color: '#fff', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
     modalOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%' },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },

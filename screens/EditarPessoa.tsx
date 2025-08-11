@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image, FlatList, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// 1. Importe o ícone de Telefone (Phone)
 import { User, Fingerprint, Check, Camera, ChevronDown, X, Trash2, CheckCircle, Phone } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -41,7 +40,6 @@ export const EditarPessoa = ({ route, navigation }) => {
 
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
-  // 2. Adicione o estado para o telefone
   const [telefone, setTelefone] = useState('');
   const [foto, setFoto] = useState(null);
   const [perfil, setPerfil] = useState(null);
@@ -58,7 +56,6 @@ export const EditarPessoa = ({ route, navigation }) => {
         setDocumento(pessoaParaEditar.documento);
         setFoto(pessoaParaEditar.foto);
         setPerfil(pessoaParaEditar.perfil);
-        // 3. Carregue o telefone da pessoa
         setTelefone(pessoaParaEditar.telefone || '');
         setAtivo(pessoaParaEditar.ativo !== false);
       }
@@ -83,15 +80,32 @@ export const EditarPessoa = ({ route, navigation }) => {
   };
 
   const handleSalvar = async () => {
-    if (!nome.trim() || !documento.trim() || !perfil || !foto) {
+    // Normaliza o campo 'documento' para a verificação
+    const documentoTrimmed = documento.trim();
+
+    if (!nome.trim() || !documentoTrimmed || !perfil || !foto) {
       Alert.alert('Atenção', 'Todos os campos, exceto telefone, são obrigatórios.');
       return;
     }
+    
     const pessoasAntigas = JSON.parse(await AsyncStorage.getItem('pessoas') || '[]');
+
+    // --- INÍCIO DA VERIFICAÇÃO ---
+    // Verifica se já existe uma pessoa com o mesmo documento, excluindo a pessoa que está sendo editada.
+    const documentoExiste = pessoasAntigas.some(
+      p => p.documento.toLowerCase() === documentoTrimmed.toLowerCase() && p.id !== pessoaId
+    );
+
+    if (documentoExiste) {
+      Alert.alert('Erro', 'Este documento já está cadastrado para outra pessoa.');
+      return; // Impede o salvamento
+    }
+    // --- FIM DA VERIFICAÇÃO ---
+
     const pessoasNovas = pessoasAntigas.map(p => {
       if (p.id === pessoaId) {
-        // 4. Inclua o telefone ao salvar as alterações
-        return { ...p, nome, documento, foto, perfil, ativo, telefone };
+        // Salva o documento já normalizado
+        return { ...p, nome, documento: documentoTrimmed, foto, perfil, ativo, telefone };
       }
       return p;
     });
@@ -150,7 +164,6 @@ export const EditarPessoa = ({ route, navigation }) => {
               value={documento}
               onChangeText={setDocumento}
             />
-            {/* 5. Adicione o campo de input para o telefone */}
             <InputWithIcon
               icon={<Phone size={20} color="#6b7280" />}
               placeholder="Telefone (opcional)"
