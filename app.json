@@ -17,11 +17,15 @@
     "ios": {
       "supportsTablet": true
     },
+    "plugins": [
+      "expo-dev-client"
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "networkSecurityConfigPath": "res/xml/network_security_config.xml",
       "permissions": [
         "CAMERA"
       ],
