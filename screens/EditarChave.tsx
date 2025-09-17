@@ -180,7 +180,7 @@ export const EditarChave = () => {
           <ScrollView>
             <View style={styles.mainContainer}>
               <Text style={styles.headerTitle}>Editar Chave</Text>
-              <View style={styles.inputContainer}><Key size={20} color="#6b7280" /><TextInput value={codigo} onChangeText={setCodigo} style={styles.input} placeholder="Código da Chave *" /></View>
+              <View style={styles.inputContainer}><Key size={20} color="#6b7280" /><TextInput value={codigo} onChangeText={setCodigo} style={styles.input} placeholder="Código da Chave *" placeholderTextColor="#888" /></View>
               <TouchableOpacity onPress={() => setModal({visible: true, type: 'local'})} style={styles.inputContainer}><MapPin size={20} color="#6b7280" /><Text style={local ? styles.input : styles.placeholderText}>{local?.nome || "Selecione um local *"}</Text><ChevronDown size={20} color="#6b7280" /></TouchableOpacity>
               <Text style={styles.sectionTitle}>Permissões por Perfil</Text>
               <TouchableOpacity onPress={() => setModal({visible: true, type: 'perfis'})} style={styles.inputContainer}><Users size={20} color="#6b7280" /><Text style={styles.input}>{perfisPermitidos.length} perfis selecionados</Text><ChevronDown size={20} color="#6b7280" /></TouchableOpacity>

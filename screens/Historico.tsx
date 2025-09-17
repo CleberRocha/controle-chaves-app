@@ -265,7 +265,7 @@ export const Historico = () => {
         
         <View style={styles.searchContainer}>
           <Search size={20} color="#9ca3af" style={styles.searchIcon} />
-          <TextInput style={styles.searchInput} placeholder="Filtrar por pessoa ou chave..." value={searchTerm} onChangeText={setSearchTerm} />
+          <TextInput style={styles.searchInput} placeholder="Filtrar por pessoa ou chave..." value={searchTerm} onChangeText={setSearchTerm} placeholderTextColor="#888" />
         </View>
 
         {isLoading ? <ActivityIndicator size="large" color="#2563eb" style={{flex: 1}}/> : (

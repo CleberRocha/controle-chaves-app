@@ -83,8 +83,8 @@ export const EditarLocal = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
         <Text style={styles.headerTitle}>Editar Local</Text>
-        <View style={styles.inputContainer}><MapPin size={20} color="#6b7280" /><TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Nome do Local *" /></View>
-        <View style={styles.inputContainer}><FileText size={20} color="#6b7280" /><TextInput value={descricao} onChangeText={setDescricao} style={styles.input} placeholder="Descrição (Opcional)" /></View>
+        <View style={styles.inputContainer}><MapPin size={20} color="#6b7280" /><TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Nome do Local *"placeholderTextColor="#888" /></View>
+        <View style={styles.inputContainer}><FileText size={20} color="#6b7280" /><TextInput value={descricao} onChangeText={setDescricao} style={styles.input} placeholder="Descrição (Opcional)"placeholderTextColor="#888" /></View>
         
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.inputContainer}>
             <Lock size={20} color="#6b7280" />

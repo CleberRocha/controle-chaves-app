@@ -96,11 +96,11 @@ export const NovaPessoa = () => {
             <TouchableOpacity style={styles.fotoPicker} onPress={tirarFoto}>
               {fotoUri ? <Image source={{ uri: fotoUri }} style={styles.foto} /> : <Camera size={40} color="#6b7280" />}
             </TouchableOpacity>
-            <View style={styles.inputContainer}><User size={20} color="#6b7280" /><TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Nome completo *" /></View>
-            <View style={styles.inputContainer}><Fingerprint size={20} color="#6b7280" /><TextInput value={documento} onChangeText={setDocumento} style={styles.input} placeholder="Documento *" /></View>
-            <View style={styles.inputContainer}><Fingerprint size={20} color="#6b7280" /><TextInput value={identificador} onChangeText={setIdentificador} style={styles.input} placeholder="Matrícula/SIAPE *" /></View>
-            <View style={styles.inputContainer}><Briefcase size={20} color="#6b7280" /><TextInput value={cargo} onChangeText={setCargo} style={styles.input} placeholder="Cargo (opcional)" /></View>
-            <View style={styles.inputContainer}><Building2 size={20} color="#6b7280" /><TextInput value={departamento} onChangeText={setDepartamento} style={styles.input} placeholder="Departamento (opcional)" /></View>
+            <View style={styles.inputContainer}><User size={20} color="#6b7280" /><TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Nome completo *" placeholderTextColor="#888" /></View>
+            <View style={styles.inputContainer}><Fingerprint size={20} color="#6b7280" /><TextInput value={documento} onChangeText={setDocumento} style={styles.input} placeholder="Documento *" placeholderTextColor="#888" /></View>
+            <View style={styles.inputContainer}><Fingerprint size={20} color="#6b7280" /><TextInput value={identificador} onChangeText={setIdentificador} style={styles.input} placeholder="Matrícula/SIAPE *" placeholderTextColor="#888" /></View>
+            <View style={styles.inputContainer}><Briefcase size={20} color="#6b7280" /><TextInput value={cargo} onChangeText={setCargo} style={styles.input} placeholder="Cargo (opcional)" placeholderTextColor="#888" /></View>
+            <View style={styles.inputContainer}><Building2 size={20} color="#6b7280" /><TextInput value={departamento} onChangeText={setDepartamento} style={styles.input} placeholder="Departamento (opcional)" placeholderTextColor="#888" /></View>
             <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.inputContainer}>
               <Text style={perfil ? styles.input : styles.placeholderText}>{perfil?.nome || "Selecione um perfil"}</Text>
               <ChevronDown size={20} color="#6b7280" />

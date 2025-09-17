@@ -130,7 +130,7 @@ export const DevolverChave = () => {
           <TextInput
             style={styles.searchInput}
             placeholder="Pesquisar por chave ou pessoa..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#888"
             value={searchTerm}
             onChangeText={setSearchTerm}
           />

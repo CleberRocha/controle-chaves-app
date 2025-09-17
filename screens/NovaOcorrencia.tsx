@@ -183,7 +183,8 @@ export const NovaOcorrencia = () => {
               value={responsavel} 
               onChangeText={setResponsavel}
               style={styles.inputText} 
-              placeholder="Responsável pelo registro" 
+              placeholder="Responsável pelo registro"
+              placeholderTextColor="#888" 
             />
           </View>          
           <View style={[styles.inputContainer, { height: 120, alignItems: 'flex-start' }]}>
@@ -194,6 +195,7 @@ export const NovaOcorrencia = () => {
               style={[styles.inputText, { textAlignVertical: 'top' }]} 
               placeholder="Descreva a ocorrência *" 
               multiline 
+              placeholderTextColor="#888"
             />
           </View>
 

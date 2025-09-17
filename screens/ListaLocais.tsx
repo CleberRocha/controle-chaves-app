@@ -11,32 +11,39 @@ export const ListaLocais = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userGroup, setUserGroup] = useState(null);
 
-  // CORREÇÃO APLICADA AQUI
-  // A lógica assíncrona agora está dentro de uma função interna,
-  // e o useCallback retorna uma função síncrona, como esperado pelo useFocusEffect.
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const operadorString = await AsyncStorage.getItem('operador');
-          if (operadorString) {
-            const operador = JSON.parse(operadorString);
-            setUserGroup(operador.grupo);
-          }
-          const response = await getLocais();
-          if (!response.ok) throw new Error('Falha ao buscar locais.');
-          const data = await response.json();
-          setLocais(data);
-        } catch (error) {
-          Alert.alert('Erro', 'Não foi possível carregar os locais.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchData();
-    }, [])
-  );
+// Substitua o seu useFocusEffect por este:
+useFocusEffect(
+  useCallback(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      const operadorString = await AsyncStorage.getItem('operador');
+      if (operadorString) {
+        const operador = JSON.parse(operadorString);
+        setUserGroup(operador.grupo);
+      }
+
+      // A chamada à API agora não precisa de um try/catch para erros de HTTP
+      const response = await getLocais();
+
+      if (response.ok) {
+        // Se a resposta for bem-sucedida, processamos os dados.
+        const data = await response.json();
+        setLocais(data);
+      } 
+      // Se a resposta falhou, MAS NÃO FOI por token expirado (401),
+      // então mostramos um erro. Se foi 401, não fazemos nada,
+      // pois o logout global já está a tratar de tudo.
+      else if (response.status !== 401) {
+        Alert.alert('Erro', 'Não foi possível carregar os locais.');
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [])
+);
 
   const handleDelete = (localId) => {
     Alert.alert(
@@ -59,6 +66,10 @@ export const ListaLocais = () => {
               const newData = await (await getLocais()).json();
               setLocais(newData);
             } catch (error) {
+              // --- ADICIONANDO A MESMA LÓGICA DE VERIFICAÇÃO AQUI ---
+              if (error.message === 'Sessão expirada.') {
+                return;
+              }
               Alert.alert('Erro', 'Não foi possível excluir o local.');
             }
           },
@@ -133,4 +144,3 @@ const styles = StyleSheet.create({
     fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: '#2563eb', justifyContent: 'center', alignItems: 'center', elevation: 8 },
     emptyText: { textAlign: 'center', marginTop: 40, fontSize: 16, color: '#6b7280' },
 });
-

@@ -137,7 +137,11 @@ export const NovoEmprestimo = ({ navigation }) => {
     
     switch (modalConfig.type) {
       case 'pessoas':
-        return modalConfig.items.filter(p => p.nome_completo.toLowerCase().includes(term));
+        return modalConfig.items.filter(p => 
+            p.nome_completo.toLowerCase().includes(term) ||
+            (p.identificador_funcional && p.identificador_funcional.toLowerCase().includes(term)) ||
+            (p.documento && p.documento.toLowerCase().includes(term))
+        );
       case 'locais':
         return modalConfig.items.filter(l => l.nome.toLowerCase().includes(term));
       case 'chaves':

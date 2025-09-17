@@ -63,6 +63,7 @@ export const Login = ({ navigation, onLoginSuccess }) => {
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
+          placeholderTextColor="#888"
         />
       </View>
       <View style={styles.inputContainer}>
@@ -74,6 +75,7 @@ export const Login = ({ navigation, onLoginSuccess }) => {
           onChangeText={setSenha}
           secureTextEntry={!isPasswordVisible}
           autoCapitalize="none"
+          placeholderTextColor="#888"
         />
         <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
           {isPasswordVisible ? <EyeOff size={20} color="#6b7280" /> : <Eye size={20} color="#6b7280" />}

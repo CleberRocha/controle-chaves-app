@@ -100,7 +100,7 @@ export const EditarPerfil = () => {
             <Text style={styles.label}>Nome do Perfil *</Text>
             <View style={styles.inputContainer}>
               <Users size={20} color="#6b7280" />
-              <TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Ex: Portaria, Limpeza" />
+              <TextInput value={nome} onChangeText={setNome} style={styles.input} placeholder="Ex: Portaria, Limpeza"placeholderTextColor="#888" />
             </View>
             <View style={styles.timeRow}>
               <View style={{ flex: 1, marginRight: 8 }}>

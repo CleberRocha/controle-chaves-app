@@ -138,6 +138,7 @@ export const ListaOcorrencias = () => {
                     placeholder="Buscar por local, responsável..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
+                    placeholderTextColor="#888"
                 />
             </View>
             <View style={styles.filtersContainer}>

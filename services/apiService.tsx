@@ -15,26 +15,33 @@ export function setOnUnauthorizedCallback(callback) {
   onUnauthorizedCallback = callback;
 }
 
+// No ficheiro: apiService.tsx
+
 const handleUnauthorized = async () => {
   await AsyncStorage.removeItem('authToken');
   await AsyncStorage.removeItem('operador');
   
+  
   onUnauthorizedCallback();
 
-  if (navigator) {
-    navigator.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
-    Alert.alert('Sessão Expirada', 'Por favor, faça o login novamente.');
-  }
+  
+  Alert.alert('Sessão Expirada', 'Por favor, faça o login novamente.');
+
+  setTimeout(() => {
+    if (navigator) {
+      navigator.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  }, 0);
 };
 
 // --- NOVA FUNÇÃO DE LOGOUT ---
 export const logout = async () => {
   await AsyncStorage.removeItem('authToken');
   await AsyncStorage.removeItem('operador');
-  onUnauthorizedCallback(); // Notifica o App.tsx para atualizar o estado e mudar de ecrã
+  onUnauthorizedCallback(); 
 };
 
 
@@ -46,12 +53,13 @@ const getToken = async () => {
   return token;
 };
 
+
 const fetchWithAuth = async (endpoint, options = {}) => {
   try {
     const token = await getToken();
     if (!token) {
       await handleUnauthorized();
-      throw new Error('Usuário não autenticado.');
+      return { ok: false, status: 401, json: () => Promise.resolve(null) };
     }
 
     const defaultHeaders = { 'Authorization': `Bearer ${token}` };
@@ -65,21 +73,17 @@ const fetchWithAuth = async (endpoint, options = {}) => {
       headers: { ...defaultHeaders, ...options.headers },
     });
 
-    if (response.status === 401) {
-      await handleUnauthorized();
-      throw new Error('Sessão expirada.'); 
-    }
+    if (response.status === 401 || response.status === 403) {
+  await handleUnauthorized();
+  return { ok: false, status: response.status, json: () => Promise.resolve(null) };
+}
     
-    if (response.status === 403) {
-      return response;
-    }
-
     return response;
+
   } catch (error) {
-    if (error.message !== 'Sessão expirada.' && error.message !== 'Usuário não autenticado.') {
-      console.error(`Erro na requisição para ${endpoint}:`, error.message);
-    }
-    throw error;
+    console.error(`Erro de rede na requisição para ${endpoint}:`, error.message);
+    Alert.alert('Erro de Conexão', 'Não foi possível conectar ao servidor.');
+    return { ok: false, status: 0, json: () => Promise.resolve(null) };
   }
 };
 
